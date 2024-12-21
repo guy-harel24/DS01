@@ -18,7 +18,7 @@ struct Node {
     Node(int key, T* value, Node* father)
             :   key(key), data(value), father (father) {}
 
-    ~Node() { delete data; }  // Ensure proper cleanup
+    ~Node() { delete data;}  // Ensure proper cleanup
 };
 
 

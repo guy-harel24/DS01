@@ -37,7 +37,9 @@ void deleteTree(Node<Key,T>* root){
     }
     deleteTree(root->left_son);
     deleteTree(root->right_son);
-    delete root;
+    Node<Key,T>* tmp = root;
+    root = nullptr;
+    delete tmp;
 }
 
 
@@ -126,7 +128,7 @@ void removeRoot(Avl_Tree<Key, T>* tree){
 }
 
 template<typename Key, typename T>
-void removeHasOneSon(Node<Key, T>* node){
+void removeHasOneSon(Avl_Tree<Key, T>* tree, Node<Key, T>* node){
     Node<Key, T>* son = nullptr;
     if (node->left_son) {
         son = node->left_son;
@@ -135,13 +137,17 @@ void removeHasOneSon(Node<Key, T>* node){
         son = node->right_son;
         node->right_son->father = node->father;
     }
-    if (node->father->left_son == node)
-    {
-        node->father->left_son = son;
+    if (node->father) {
+        if (node->father->left_son == node) {
+            node->father->left_son = son;
+        } else {
+            node->father->right_son = son;
+        }
     } else {
-        node->father->right_son = son;
+        tree->root = son;
     }
     delete node;
+
 }
 
 template<typename Key, typename T>
@@ -151,18 +157,19 @@ bool isLeaf(Node<Key, T>* node)
 }
 
 template<typename Key, typename T>
-void removeHasTwoSons(Node<Key, T>* node){
+void removeHasTwoSons(Avl_Tree<Key, T>* tree, Node<Key, T>* node){
     Node<Key,T>* replacement_node = node->right_son;
     while (replacement_node->left_son) {
         replacement_node = replacement_node->left_son;
     }
     node->key = replacement_node->key;
+    delete node->data;
     node->data = replacement_node->data;
     replacement_node->data = nullptr;
     if (isLeaf(replacement_node)) {
         removeLeaf(replacement_node);
     } else {
-        removeHasOneSon(replacement_node);
+        removeHasOneSon(tree, replacement_node);
     }
 }
 
@@ -177,9 +184,9 @@ void Avl_Tree<Key, T>::remove(Key key) {
                 removeRoot(this);
             }
         } else if (node->right_son && node->left_son) {
-            removeHasTwoSons(node);
+            removeHasTwoSons(this, node);
         } else {
-            removeHasOneSon(node);
+            removeHasOneSon(this, node);
         }
     }
 }

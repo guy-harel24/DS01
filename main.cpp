@@ -2,8 +2,8 @@
 #include "AVL_Tree.h"
 
 int main() {
-    Avl_Tree<int, std::string> tree;
     // Test 1: Insert nodes
+    Avl_Tree<int, std::string> tree;
     tree.insert(10, new std::string("Root"));
     tree.insert(5, new std::string("Left Child"));
     tree.insert(15, new std::string("Right Child"));
@@ -48,4 +48,6 @@ int main() {
         std::cout << "Caught exception: " << e.what() << std::endl;
     }
 
+
+    return 0;
 }
