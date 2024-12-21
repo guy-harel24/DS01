@@ -99,28 +99,89 @@ void printAux(Node<Key, T>* root){
 }
 
 template <typename Key, typename T>
-void Avl_Tree<Key, T>::print(){ //in o
-    printAux(root);
-}
-
-template<typename Key, typename T>
-void Avl_Tree<Key, T>::remove(Key) {
-
+void Avl_Tree<Key, T>::print(){//in order
+    if (root) {
+        printAux(root);
+        std::cout << std::endl;
+    }
 }
 
 template<typename Key, typename T>
 void removeLeaf(Node<Key, T>* node) {
+    if (node->father) { // If the node has a parent
+        if (node->father->left_son == node) {
+            node->father->left_son = nullptr; // Disconnect left child
+        } else if (node->father->right_son == node) {
+            node->father->right_son = nullptr; // Disconnect right child
+        }
+    }
     delete node;
 }
 
 template<typename Key, typename T>
-void removeHasOneSon(Node<Key, T>* node){
+void removeRoot(Avl_Tree<Key, T>* tree){
+    Node<Key, T>* tmp = tree->root;
+    tree->root = nullptr;
+    delete tmp;
+}
 
+template<typename Key, typename T>
+void removeHasOneSon(Node<Key, T>* node){
+    Node<Key, T>* son = nullptr;
+    if (node->left_son) {
+        son = node->left_son;
+        node->left_son->father = node->father;
+    } else {
+        son = node->right_son;
+        node->right_son->father = node->father;
+    }
+    if (node->father->left_son == node)
+    {
+        node->father->left_son = son;
+    } else {
+        node->father->right_son = son;
+    }
+    delete node;
+}
+
+template<typename Key, typename T>
+bool isLeaf(Node<Key, T>* node)
+{
+    return !(node->left_son || node->right_son);
 }
 
 template<typename Key, typename T>
 void removeHasTwoSons(Node<Key, T>* node){
+    Node<Key,T>* replacement_node = node->right_son;
+    while (replacement_node->left_son) {
+        replacement_node = replacement_node->left_son;
+    }
+    node->key = replacement_node->key;
+    node->data = replacement_node->data;
+    replacement_node->data = nullptr;
+    if (isLeaf(replacement_node)) {
+        removeLeaf(replacement_node);
+    } else {
+        removeHasOneSon(replacement_node);
+    }
+}
 
+template<typename Key, typename T>
+void Avl_Tree<Key, T>::remove(Key key) {
+    Node<Key, T>* node = find(key);
+    if (node) {
+        if (isLeaf(node)) {
+            if(node->father) {
+                removeLeaf(node);
+            } else {
+                removeRoot(this);
+            }
+        } else if (node->right_son && node->left_son) {
+            removeHasTwoSons(node);
+        } else {
+            removeHasOneSon(node);
+        }
+    }
 }
 
 #endif //DATASTRUCTURE01_AVL_TREE_H
