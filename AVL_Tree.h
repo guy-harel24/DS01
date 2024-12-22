@@ -17,12 +17,20 @@ public:
     Node<Key,T>* root;
     Avl_Tree() : root(nullptr){};
     ~Avl_Tree();
-
     Node<Key, T>* find(Key);
     void insert(Key, T* data = nullptr);
     void remove(Key);
     void print();
+    int getHeight() const;
 };
+
+template<typename Key, typename T>
+int Avl_Tree<Key, T>::getHeight() const {
+    if(root){
+        return root->height;
+    }
+    return LEAVE_HEIGHT - 1;
+}
 
 
 template<typename Key, typename T>
@@ -65,16 +73,38 @@ Node<Key, T>* Avl_Tree<Key, T>::find(Key key) {
 }
 
 template <typename Key, typename T>
+void updateHeight(Node<Key, T>* node){
+    while (node){
+        int left_height = -1, right_height = -1;
+        if(node->left_son){
+            left_height = node->left_son->height;
+        }
+        if(node->right_son){
+            right_height = node->right_son->height;
+        }
+        int new_height = right_height > left_height ? right_height : left_height;
+        new_height++;
+        if (new_height == node->height){
+            break;
+        }
+        node->height = new_height;
+        node = node->father;
+    }
+}
+
+template <typename Key, typename T>
 void insert_aux(Node<Key, T>* root, Key key, T* data) {
     if (key < root->key) {
         if (root->left_son == nullptr) {
             root->left_son = new Node<Key, T>(key, data, root);
+            updateHeight(root);
         } else {
             insert_aux(root->left_son, key, data);
         }
     } else if (key > root->key) {
         if (root->right_son == nullptr) {
             root->right_son = new Node<Key, T>(key, data, root);
+            updateHeight(root);
         } else {
             insert_aux(root->right_son, key, data);
         }
@@ -117,6 +147,7 @@ void removeLeaf(Node<Key, T>* node) {
             node->father->right_son = nullptr; // Disconnect right child
         }
     }
+    updateHeight(node->father);
     delete node;
 }
 
@@ -143,6 +174,7 @@ void removeHasOneSon(Avl_Tree<Key, T>* tree, Node<Key, T>* node){
         } else {
             node->father->right_son = son;
         }
+        updateHeight(node->father);
     } else {
         tree->root = son;
     }
