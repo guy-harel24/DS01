@@ -22,10 +22,35 @@ struct Node {
 
     ~Node() { delete data;}  // Ensure proper cleanup
 
-
+    int getBalanceFactor() const;
+    void updateHeightInNode();
 };
 
+template<typename Key, typename T>
+void Node<Key, T>::updateHeightInNode() {
+    int left_height = -1, right_height = -1;
+    if(left_son){
+        left_height = left_son->height;
+    }
+    if(right_son){
+        right_height = right_son->height;
+    }
+    int new_height = right_height > left_height ? right_height : left_height;
+    new_height++;
+    height = new_height;
+}
 
+template<typename Key, typename T>
+int Node<Key, T>::getBalanceFactor() const {
+    int left_height = -1, right_height = -1;
+    if(left_son) {
+        left_height = left_son->height;
+    }
+    if (right_son){
+        right_height = right_son->height;
+    }
+    return left_height - right_height;
+}
 
 
 #endif //DATASTRUCTURE01_NODE_H

@@ -2,13 +2,15 @@
 // Created by guyha on 20/12/2024.
 //
 
-#ifndef DATASTRUCTURE01_AVL_TREE_H
-#define DATASTRUCTURE01_AVL_TREE_H
+#ifndef DATASTRUCTURE01_AVL_TREE1_H
+#define DATASTRUCTURE01_AVL_TREE1_H
 
 #include "Node.h"
 #include <exception>
 #include <stdexcept>
 #include <iostream>
+#include <cassert>
+
 
 template <typename Key, typename T>
 class Avl_Tree
@@ -22,7 +24,9 @@ public:
     void remove(Key);
     void print();
     int getHeight() const;
+
 };
+enum Operation {Remove, Insert};
 
 template<typename Key, typename T>
 int Avl_Tree<Key, T>::getHeight() const {
@@ -30,6 +34,7 @@ int Avl_Tree<Key, T>::getHeight() const {
         return root->height;
     }
     return LEAVE_HEIGHT - 1;
+
 }
 
 
@@ -73,7 +78,7 @@ Node<Key, T>* Avl_Tree<Key, T>::find(Key key) {
 }
 
 template <typename Key, typename T>
-void updateHeight(Node<Key, T>* node){
+void updateHeightInTree(Node<Key, T>* node){
     while (node){
         int left_height = -1, right_height = -1;
         if(node->left_son){
@@ -93,30 +98,170 @@ void updateHeight(Node<Key, T>* node){
 }
 
 template <typename Key, typename T>
-void insert_aux(Node<Key, T>* root, Key key, T* data) {
+void balanceLL(Node<Key, T>* node, Avl_Tree<Key, T>* tree) {
+   // assert(node->getBalanceFactor() == 2);
+   // assert(node->left_son->getBalanceFactor() >= 0);
+    Node<Key, T>* father = node;
+    Node<Key, T>* son = node->left_son;
+    Node<Key, T>* right_grandson = son->right_son;
+
+    // Perform rotation
+    son->right_son = father;
+    father->left_son = right_grandson;
+
+
+    // Update parent relationships
+    if (right_grandson) {
+        right_grandson->father = father;
+    }
+    if (father->father) {
+        son->father = father->father;
+        if (father->father->left_son == father) {
+            father->father->left_son = son;
+        } else {
+            father->father->right_son = son;
+        }
+    } else { // father is root
+        son->father = nullptr;
+        tree->root = son;
+    }
+    father->father = son;
+
+    // Update heights
+    father->updateHeightInNode();
+    son->updateHeightInNode();
+}
+
+template <typename Key, typename T>
+void balanceRR(Node<Key, T>* node, Avl_Tree<Key, T>* tree) {
+  //  assert(node->getBalanceFactor() == -2);
+  //  assert(node->right_son->getBalanceFactor()== -1);
+    Node<Key, T>* father = node;
+    Node<Key, T>* son = node->right_son;
+    Node<Key, T>* left_grandson = son->left_son;
+
+    // Perform rotation
+    son->left_son = father;
+    father->right_son = left_grandson;
+
+    // Update parent relationships
+    if (left_grandson) {
+        left_grandson->father = father;
+    }
+    if (father->father) {
+        son->father = father->father;
+        if (father->father->left_son == father) {
+            father->father->left_son = son;
+        } else {
+            father->father->right_son = son;
+        }
+    } else { // father is root
+        son->father = nullptr;
+        tree->root = son;
+    }
+    father->father = son;
+
+    // Update heights
+    father->updateHeightInNode();
+    son->updateHeightInNode();
+}
+
+template <typename Key, typename T>
+void balanceLR(Node<Key, T>* node, Avl_Tree<Key, T>* tree) {
+    assert(node->getBalanceFactor() == 2);
+    assert(node->left_son->getBalanceFactor() == -1);
+    balanceRR(node->left_son, tree);
+    balanceLL(node, tree);
+}
+
+template <typename Key, typename T>
+void balanceRL(Node<Key, T>* node, Avl_Tree<Key, T>* tree) {
+    assert(node->getBalanceFactor() == -2);
+    assert(node->right_son->getBalanceFactor() >= 0);
+    balanceLL(node->right_son, tree);
+    balanceRR(node, tree);
+}
+
+
+template <typename Key, typename T>
+void balanceAfterOperation(Avl_Tree<Key, T>* tree,
+                           Node<Key,T>* node, Operation operation){
+    while(node){
+        if(node->getBalanceFactor() == 2){
+            assert(node->left_son);
+            if(node->left_son->getBalanceFactor() >= 0) {
+                balanceLL(node, tree);
+            } else {
+                balanceLR(node, tree);
+            }
+            if(operation == Insert){
+                break;
+            }
+        } else if (node->getBalanceFactor() == -2){
+            assert(node->right_son);
+            if(node->right_son->getBalanceFactor() == -1){
+                balanceRR(node, tree);
+            } else {
+                balanceRL(node, tree);
+            }
+            if(operation == Insert){
+                break;
+            }
+        }
+        node = node->father;
+    }
+}
+/*
+template <typename Key, typename T>
+void insertAux(Node<Key, T>* root, Key key, T* data) {
     if (key < root->key) {
         if (root->left_son == nullptr) {
             root->left_son = new Node<Key, T>(key, data, root);
-            updateHeight(root);
+            updateHeightInTree(root);
         } else {
-            insert_aux(root->left_son, key, data);
+            insertAux(root->left_son, key, data); // Propagate return value
         }
     } else if (key > root->key) {
         if (root->right_son == nullptr) {
             root->right_son = new Node<Key, T>(key, data, root);
-            updateHeight(root);
+            updateHeightInTree(root);
         } else {
-            insert_aux(root->right_son, key, data);
+            insertAux(root->right_son, key, data); // Propagate return value
         }
     }
 }
+*/
+
+template <typename Key, typename T>
+Node<Key, T>* insertAux(Node<Key, T>* root, Key key, T* data) {
+    if (key < root->key) {
+        if (root->left_son == nullptr) {
+            root->left_son = new Node<Key, T>(key, data, root);
+            updateHeightInTree(root);
+            return root->left_son;
+        } else {
+            return insertAux(root->left_son, key, data); // Propagate return value
+        }
+    } else if (key > root->key) {
+        if (root->right_son == nullptr) {
+            root->right_son = new Node<Key, T>(key, data, root);
+            updateHeightInTree(root);
+            return root->right_son;
+        } else {
+            return insertAux(root->right_son, key, data); // Propagate return value
+        }
+    }
+    return nullptr; // Should never reach here
+}
+
 
 template <typename Key, typename T>
 void Avl_Tree<Key, T>::insert(Key key, T* data) {
     if (root == nullptr) {
         root = new Node<Key, T>(key, data, nullptr);
     } else if (find(key) == nullptr) {
-        insert_aux(root, key, data);
+        Node<Key,T>* inserted_node = insertAux(root, key, data);
+        balanceAfterOperation(this, inserted_node, Insert);
     }
 }
 
@@ -147,7 +292,7 @@ void removeLeaf(Node<Key, T>* node) {
             node->father->right_son = nullptr; // Disconnect right child
         }
     }
-    updateHeight(node->father);
+    updateHeightInTree(node->father);
     delete node;
 }
 
@@ -174,7 +319,7 @@ void removeHasOneSon(Avl_Tree<Key, T>* tree, Node<Key, T>* node){
         } else {
             node->father->right_son = son;
         }
-        updateHeight(node->father);
+        updateHeightInTree(node->father);
     } else {
         tree->root = son;
     }
@@ -189,8 +334,8 @@ bool isLeaf(Node<Key, T>* node)
 }
 
 template<typename Key, typename T>
-void removeHasTwoSons(Avl_Tree<Key, T>* tree, Node<Key, T>* node){
-    Node<Key,T>* replacement_node = node->right_son;
+void removeHasTwoSons(Avl_Tree<Key, T>* tree, Node<Key, T>* node) {
+    Node<Key, T> *replacement_node = node->right_son;
     while (replacement_node->left_son) {
         replacement_node = replacement_node->left_son;
     }
@@ -204,23 +349,26 @@ void removeHasTwoSons(Avl_Tree<Key, T>* tree, Node<Key, T>* node){
         removeHasOneSon(tree, replacement_node);
     }
 }
-
 template<typename Key, typename T>
 void Avl_Tree<Key, T>::remove(Key key) {
-    Node<Key, T>* node = find(key);
-    if (node) {
-        if (isLeaf(node)) {
-            if(node->father) {
-                removeLeaf(node);
+        Node<Key, T>* node = find(key);
+        if (node) {
+            Node<Key, T>* father = node->father;
+            if (isLeaf(node)) {
+                if(node->father) {
+                    removeLeaf(node);
+                } else {
+                    removeRoot(this);
+                }
+            } else if (node->right_son && node->left_son) {
+                removeHasTwoSons(this, node);
             } else {
-                removeRoot(this);
+                removeHasOneSon(this, node);
             }
-        } else if (node->right_son && node->left_son) {
-            removeHasTwoSons(this, node);
-        } else {
-            removeHasOneSon(this, node);
+            if (father) {
+                balanceAfterOperation(this, father, Remove);
+            }
         }
     }
-}
 
-#endif //DATASTRUCTURE01_AVL_TREE_H
+#endif //DATASTRUCTURE01_AVL_TREE1_H
