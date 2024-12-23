@@ -257,11 +257,17 @@ Node<Key, T>* insertAux(Node<Key, T>* root, Key key, T* data) {
 
 template <typename Key, typename T>
 void Avl_Tree<Key, T>::insert(Key key, T* data) {
-    if (root == nullptr) {
-        root = new Node<Key, T>(key, data, nullptr);
-    } else if (find(key) == nullptr) {
-        Node<Key,T>* inserted_node = insertAux(root, key, data);
-        balanceAfterOperation(this, inserted_node, Insert);
+    try {
+        if (root == nullptr) {
+            root = new Node<Key, T>(key, data, nullptr);
+        } else if (find(key) == nullptr) {
+            Node<Key,T>* inserted_node = insertAux(root, key, data);
+            balanceAfterOperation(this, inserted_node, Insert);
+        }
+    } catch (const std::bad_alloc& e) {
+        // Handle memory allocation failure
+        std::cerr << "Memory allocation failed while inserting key " << key << ": " << e.what() << std::endl;
+        throw;  // Rethrow exception if you want to propagate it up
     }
 }
 
