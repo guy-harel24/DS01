@@ -367,6 +367,8 @@ void Avl_Tree<Key, T>::remove(Key key) {
             }
             if (father) {
                 balanceAfterOperation(this, father, Remove);
+            } else {
+                balanceAfterOperation(this, root, Remove);
             }
         }
     }
